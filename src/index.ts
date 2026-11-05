@@ -1,10 +1,13 @@
-const AnyList = require("anylist");
-import * as dotenv from "dotenv";
 import * as fs from "fs/promises";
 import * as path from "path";
 import cron from "node-cron";
+import { AnyListClient } from "./anylist";
 
-dotenv.config({ quiet: true });
+try {
+  process.loadEnvFile(); // read .env if present (Docker passes env vars directly)
+} catch {
+  // no .env file
+}
 
 const OUTPUT_DIR = path.resolve(
   process.env.OUTPUT_DIR || path.join(__dirname, "..", "recipes")
@@ -25,9 +28,9 @@ async function writeAtomic(file: string, contents: string) {
   await fs.rename(tmp, file);
 }
 
-async function pruneSnapshots(historyDir: string) {
+async function pruneSnapshots(historyDir: string, prefix: string) {
   const files = (await fs.readdir(historyDir))
-    .filter((f) => /^recipes-.*\.json$/.test(f))
+    .filter((f) => f.startsWith(`${prefix}-`) && f.endsWith(".json"))
     .sort(); // ISO-like names sort chronologically
   for (const f of files.slice(0, Math.max(0, files.length - KEEP_SNAPSHOTS))) {
     await fs.unlink(path.join(historyDir, f));
@@ -44,44 +47,42 @@ async function downloadRecipes() {
 
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
 
-  const anylist = new AnyList({
+  const client = new AnyListClient(
     email,
     password,
     // Keep the auth token alongside the backups so it survives container restarts.
-    credentialsFile: path.join(OUTPUT_DIR, ".anylist_credentials"),
-  });
+    path.join(OUTPUT_DIR, ".anylist_credentials")
+  );
 
-  try {
-    log("Logging in to AnyList...");
-    await anylist.login();
+  log("Fetching recipes from AnyList...");
+  const { recipes, recipeCollections } = await client.getRecipeData();
 
-    log("Fetching recipes...");
-    const recipes = await anylist.getRecipes();
+  // Guard against overwriting a good backup with an empty result.
+  if (recipes.length === 0) {
+    throw new Error("AnyList returned no recipes; keeping existing backup");
+  }
 
-    // Guard against overwriting a good backup with an empty result.
-    if (!Array.isArray(recipes) || recipes.length === 0) {
-      throw new Error("AnyList returned no recipes; keeping existing backup");
-    }
+  const files: Record<string, string> = {
+    recipes: JSON.stringify(recipes, null, 2),
+    collections: JSON.stringify(recipeCollections, null, 2),
+  };
+  for (const [name, json] of Object.entries(files)) {
+    await writeAtomic(path.join(OUTPUT_DIR, `${name}.json`), json);
+  }
 
-    const json = JSON.stringify(recipes, null, 2);
-    await writeAtomic(path.join(OUTPUT_DIR, "recipes.json"), json);
-
-    if (KEEP_SNAPSHOTS > 0) {
-      const historyDir = path.join(OUTPUT_DIR, "history");
-      await fs.mkdir(historyDir, { recursive: true });
-      const stamp = new Date().toISOString().replace(/:/g, "-").replace(/\..+$/, "");
-      await writeAtomic(path.join(historyDir, `recipes-${stamp}.json`), json);
-      await pruneSnapshots(historyDir);
-    }
-
-    log(`Saved ${recipes.length} recipes to ${path.join(OUTPUT_DIR, "recipes.json")}`);
-  } finally {
-    try {
-      await anylist.teardown();
-    } catch {
-      // ignore teardown errors
+  if (KEEP_SNAPSHOTS > 0) {
+    const historyDir = path.join(OUTPUT_DIR, "history");
+    await fs.mkdir(historyDir, { recursive: true });
+    const stamp = new Date().toISOString().replace(/:/g, "-").replace(/\..+$/, "");
+    for (const [name, json] of Object.entries(files)) {
+      await writeAtomic(path.join(historyDir, `${name}-${stamp}.json`), json);
+      await pruneSnapshots(historyDir, name);
     }
   }
+
+  log(
+    `Saved ${recipes.length} recipes and ${recipeCollections.length} collections to ${OUTPUT_DIR}`
+  );
 }
 
 async function main() {

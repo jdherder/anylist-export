@@ -12,8 +12,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "anylist": "^0.8.4",
-    "dotenv": "^18.0.9",
     "node-cron": "^4.6.0"
   },
   "devDependencies": {

@@ -1,6 +1,8 @@
 # AnyList recipe export
 
-Downloads every recipe from AnyList to `recipes.json`. It also keeps dated snapshots in `history/`.
+Downloads every recipe from AnyList to `recipes.json`, and your recipe collections to `collections.json`. It also keeps dated snapshots of both in `history/`.
+
+It talks to AnyList directly (`src/anylist.ts`), using the same login and data endpoints as the AnyList web app. A small built-in decoder (`src/protobuf.ts`) reads AnyList's binary data format, so the only runtime dependency is `node-cron`.
 
 ## Configuration
 
@@ -11,7 +13,7 @@ Downloads every recipe from AnyList to `recipes.json`. It also keeps dated snaps
 | `SCHEDULE` | unset | Cron expression, e.g. `0 3 * * *`. If unset, the export runs once and exits |
 | `RUN_ON_START` | `true` | When `SCHEDULE` is set, also run once right when the container starts |
 | `TZ` | UTC | Time zone used for the schedule |
-| `KEEP_SNAPSHOTS` | `30` | How many dated copies to keep in `history/` (`0` turns snapshots off) |
+| `KEEP_SNAPSHOTS` | `30` | How many dated copies of each file to keep in `history/` (`0` turns snapshots off) |
 
 If AnyList returns zero recipes, the export fails and leaves the existing backup untouched.
 
