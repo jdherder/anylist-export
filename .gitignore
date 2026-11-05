@@ -1,4 +1,9 @@
 node_modules/
 dist/
 .env
-*.log 
+*.log
+*.tmp
+
+# Backup output (default OUTPUT_DIR and local test runs)
+recipes/
+test-output/

@@ -1,23 +1,21 @@
 {
-  "name": "anylist",
+  "name": "anylist-export",
   "version": "1.0.0",
-  "description": "Download recipes from AnyList",
-  "main": "dist/index.js",
+  "private": true,
+  "description": "Back up AnyList recipes to local JSON files",
+  "license": "ISC",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "tsc",
-    "start": "ts-node src/index.ts",
-    "download": "npm run start"
+    "start": "tsc && node dist/index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "anylist": "^0.3.0",
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0",
-    "dotenv": "^16.0.0"
+    "node-cron": "^4.6.0"
   },
   "devDependencies": {
-    "ts-node": "^10.0.0"
+    "@types/node": "^22.20.5",
+    "typescript": "^7.0.2"
   }
 }

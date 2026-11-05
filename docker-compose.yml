@@ -1,0 +1,14 @@
+services:
+  anylist-export:
+    build: .
+    container_name: anylist-export
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Daily at 3:00am in the timezone below. Remove SCHEDULE to run once and exit.
+      SCHEDULE: "0 3 * * *"
+      TZ: America/Chicago
+      KEEP_SNAPSHOTS: "30"
+    volumes:
+      # Change the left side to a folder on your Synology, e.g. /volume1/backups/anylist
+      - ./recipes:/data
