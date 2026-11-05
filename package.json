@@ -12,10 +12,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "anylist": "^0.3.0",
-    "typescript": "^5.0.0",
     "@types/node": "^20.0.0",
-    "dotenv": "^16.0.0"
+    "anylist": "^0.8.4",
+    "dotenv": "^16.0.0",
+    "node-cron": "^4.6.0",
+    "typescript": "^5.0.0"
   },
   "devDependencies": {
     "ts-node": "^10.0.0"

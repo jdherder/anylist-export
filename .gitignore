@@ -2,3 +2,7 @@ node_modules/
 dist/
 .env
 *.log 
+.env
+recipes/history/
+recipes/.anylist_credentials
+*.tmp
