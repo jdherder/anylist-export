@@ -4,7 +4,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import cron from "node-cron";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const OUTPUT_DIR = path.resolve(
   process.env.OUTPUT_DIR || path.join(__dirname, "..", "recipes")
